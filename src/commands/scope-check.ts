@@ -167,12 +167,15 @@ function parseScopeFile(content: string): ScopeDefinition {
 
 function matchGlob(file: string, pattern: string): boolean {
   // Convert glob pattern to regex
+  // Use placeholders to avoid replacing regex special chars within our replacements
   const regexPattern = pattern
     .replace(/\./g, '\\.')
-    .replace(/\*\*/g, '<<<GLOBSTAR>>>')
-    .replace(/\*/g, '[^/]*')
-    .replace(/<<<GLOBSTAR>>>/g, '.*')
-    .replace(/\?/g, '.');
+    .replace(/\*\*\//g, '\x00GLOBSTAR_SLASH\x00')  // Placeholder for **/
+    .replace(/\*\*/g, '\x00GLOBSTAR\x00')          // Placeholder for **
+    .replace(/\*/g, '[^/]*')                        // * = match within single directory
+    .replace(/\?/g, '.')
+    .replace(/\x00GLOBSTAR_SLASH\x00/g, '(?:.+/)?') // **/ = one or more directories (optional)
+    .replace(/\x00GLOBSTAR\x00/g, '.*');            // ** alone = match anything
 
   const regex = new RegExp(`^${regexPattern}$`);
   return regex.test(file) || regex.test(file.replace(/^\.\//, ''));
