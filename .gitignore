@@ -145,7 +145,6 @@ docs/
 
 # Claude
 .claude/
-CLAUDE.md
 .DS_Store
 
 # Pnpm
