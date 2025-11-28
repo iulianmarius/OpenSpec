@@ -63,6 +63,135 @@ After deployment, create separate PR to:
 - Use `openspec archive <change-id> --skip-specs --yes` for tooling-only changes (always pass the change ID explicitly)
 - Run `openspec validate --strict` to confirm the archived change passes checks
 
+## Spec Compliance Verification
+
+Use `openspec verify` to check if code implementation matches spec requirements.
+
+### When to Verify
+- Before archiving a change (ensure implementation matches specs)
+- During code review (check compliance percentage)
+- After refactoring (ensure no regressions)
+- In CI/CD pipelines (automated compliance checks)
+
+### Verification Commands
+```bash
+# Verify a specific change
+openspec verify add-user-auth
+
+# Verify a specific spec
+openspec verify user-authentication
+
+# Verify all specs in the project
+openspec verify --all
+
+# Set minimum compliance threshold (fail if below)
+openspec verify --all --min-compliance 80
+
+# JSON output for CI integration
+openspec verify --all --json
+
+# Verbose mode (show evidence for each point)
+openspec verify add-user-auth --verbose
+```
+
+### Understanding Results
+- **Verified** (✓): Requirement fully implemented with evidence
+- **Partial** (⚠): Some implementation found but incomplete
+- **Missing** (✗): No implementation evidence found
+- **Unknown** (?): Unable to determine (complex requirement)
+
+Compliance percentage: `(verified × 100 + partial × 50) / total`
+
+## Auto-Generate Specs from Code
+
+Use `openspec generate` to reverse-engineer specs from existing code (brownfield adoption).
+
+### When to Generate
+- Adopting OpenSpec in an existing project
+- Documenting undocumented code
+- Creating baseline specs for legacy systems
+- Auditing what behavior already exists
+
+### Generation Commands
+```bash
+# Generate specs for a directory
+openspec generate src/auth
+
+# Generate from test files only (higher accuracy)
+openspec generate src/ --from-tests
+
+# Preview without writing files
+openspec generate src/auth --dry-run
+
+# Output as JSON for processing
+openspec generate src/auth --json
+
+# Specify output directory
+openspec generate src/auth --output openspec/specs
+```
+
+### Generated Spec Quality
+- **High confidence**: Clear JSDoc, explicit test descriptions
+- **Medium confidence**: Inferred from function names, partial docs
+- **Low confidence**: Complex code, missing documentation
+
+### Post-Generation Workflow
+1. Review generated specs for accuracy
+2. Add business context to "Purpose" sections
+3. Remove implementation details (focus on behavior)
+4. Run `openspec validate --specs` to check format
+5. Iterate with domain experts to refine requirements
+
+## Drift Prevention
+
+Prevent AI agents from making changes outside the defined scope.
+
+### Scope Definition
+Create `scope.md` in your change directory to define file boundaries:
+
+```markdown
+# Scope Definition
+
+## In-Scope Files
+Files that may be modified for this change:
+- src/auth/**/*.ts
+- src/api/routes/auth.ts
+- test/auth/**/*.test.ts
+
+## Out-of-Scope Files
+Files that must NOT be modified:
+- src/database/**/*
+- src/core/**/*
+- package.json
+
+## Requires Approval
+Files that need explicit approval before modifying:
+- src/config/*.ts
+- README.md
+```
+
+### Using Drift Prevention
+```bash
+# Check if a file is in scope
+openspec scope-check src/auth/login.ts --change add-user-auth
+
+# Install Claude Code hooks for automatic checking
+openspec hooks install
+
+# Check hook status
+openspec hooks status
+
+# Uninstall hooks
+openspec hooks uninstall
+```
+
+### How Hooks Work
+When installed, the drift guard hook intercepts Edit/Write operations and:
+1. Checks the file against active change scopes
+2. Blocks out-of-scope modifications
+3. Prompts for approval on restricted files
+4. Logs approved drifts to `drift-log.md`
+
 ## Before Any Task
 
 **Context Checklist:**
@@ -101,6 +230,15 @@ openspec archive <change-id> [--yes|-y]   # Archive after deployment (add --yes 
 # Project management
 openspec init [path]           # Initialize OpenSpec
 openspec update [path]         # Update instruction files
+
+# Compliance & Generation
+openspec verify [item]         # Verify code compliance with specs
+openspec verify --all          # Verify all specs in project
+openspec generate <path>       # Generate specs from existing code
+
+# Drift prevention
+openspec scope-check <file>    # Check if file is in scope for changes
+openspec hooks install         # Install drift prevention hooks
 
 # Interactive mode
 openspec show                  # Prompts for selection

@@ -13,6 +13,10 @@ import { registerSpecCommand } from '../commands/spec.js';
 import { ChangeCommand } from '../commands/change.js';
 import { ValidateCommand } from '../commands/validate.js';
 import { ShowCommand } from '../commands/show.js';
+import { registerScopeCheckCommand } from '../commands/scope-check.js';
+import { registerHooksCommand } from '../commands/hooks.js';
+import { registerVerifyCommand } from '../commands/verify.js';
+import { registerGenerateCommand } from '../commands/generate.js';
 
 const program = new Command();
 const require = createRequire(import.meta.url);
@@ -199,6 +203,10 @@ program
   });
 
 registerSpecCommand(program);
+registerScopeCheckCommand(program);
+registerHooksCommand(program);
+registerVerifyCommand(program);
+registerGenerateCommand(program);
 
 // Top-level validate command
 program
